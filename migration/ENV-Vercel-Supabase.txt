@@ -1,0 +1,5 @@
+VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+VITE_SUPABASE_ANON_KEY=COLE_A_CHAVE_ANON_PUBLICA_AQUI
+VITE_APP_TITLE=Amigos do Forte Marechal Rondon
+
+As variaveis do backend Manus/Express estao documentadas no LEIA-ME.txt. Nao publique chaves secretas no repositorio.

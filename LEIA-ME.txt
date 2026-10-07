@@ -1,0 +1,98 @@
+FUT - AMIGOS DO FORTE MARECHAL RONDON
+PACOTE DE MIGRACAO PARA VERCEL + SUPABASE
+
+1) LINGUAGENS E FRAMEWORKS EXATOS
+
+Frontend atual:
+- TypeScript.
+- React 19.2.1.
+- Vite 7.1.9.
+- Tailwind CSS 4.1.14.
+- shadcn/ui sobre Radix UI.
+- Wouter 3.7.1 para rotas.
+- TanStack React Query 5.90.2.
+- tRPC client 11.6.0.
+- Lucide React para icones.
+
+Backend atual:
+- TypeScript executado com Node.js.
+- Express 4.21.2.
+- tRPC 11.6.0.
+- Drizzle ORM 0.44.5.
+- MySQL2 3.15.0.
+- MySQL/TiDB no template atual.
+- Autenticacao atual: Manus OAuth no backend + login local complementar em localStorage/sessionStorage.
+
+Stack planejada para a hospedagem nova:
+- Frontend: os mesmos React + TypeScript + Vite, publicado na Vercel.
+- Autenticacao e banco: Supabase Auth + Supabase PostgreSQL.
+- Cliente Supabase: @supabase/supabase-js 2.117.3.
+- O arquivo migration/supabase/auth.ts contem o hook e funcoes de login, cadastro, logout e recuperacao de senha.
+
+2) VARIAVEIS DE AMBIENTE
+
+Para a versao migrada usando somente Vercel + Supabase, configure no projeto da Vercel:
+
+VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+VITE_SUPABASE_ANON_KEY=SUA_CHAVE_ANON_PUBLICA
+VITE_APP_TITLE=Amigos do Forte Marechal Rondon
+
+A chave VITE_SUPABASE_ANON_KEY pode ser usada no frontend. NUNCA coloque a SUPABASE_SERVICE_ROLE_KEY no frontend, no Git ou em arquivo publico.
+
+Se o backend Express/tRPC atual continuar sendo executado temporariamente, ele tambem espera as variaveis do template original:
+- DATABASE_URL
+- JWT_SECRET
+- VITE_APP_ID
+- OAUTH_SERVER_URL
+- VITE_OAUTH_PORTAL_URL
+- OWNER_OPEN_ID
+- OWNER_NAME
+- BUILT_IN_FORGE_API_URL
+- BUILT_IN_FORGE_API_KEY
+- VITE_FRONTEND_FORGE_API_KEY
+- VITE_FRONTEND_FORGE_API_URL
+- VITE_ANALYTICS_ENDPOINT
+- VITE_ANALYTICS_WEBSITE_ID
+
+Para a migracao completa para Supabase, o ideal e remover a dependencia do Manus OAuth/tRPC e usar somente as tres variaveis VITE_SUPABASE_* acima. Nao copie valores reais de chaves para este ZIP; preencha-os na Vercel.
+
+3) O CODIGO ATUAL PRECISA SER MODIFICADO PARA POSTGRESQL EXTERNO?
+
+SIM. O codigo atual nao usa PostgreSQL externo: o template usa Drizzle com MySQL2/TiDB no backend e a interface tambem mantem parte do estado no localStorage do navegador. O Supabase usa PostgreSQL.
+
+Este pacote ja inclui:
+- migration/supabase/001_initial_schema.sql: tabelas PostgreSQL, relacionamentos e politicas RLS.
+- migration/supabase/client.ts: cliente Supabase.
+- migration/supabase/auth.ts: login, cadastro, logout, recuperacao de senha e listener de sessao.
+- migration/export/app-data.json: exportacao universal inicial.
+- migration/export/export-local-storage.mjs: exportador dos dados que estejam no navegador.
+
+Passos da migracao:
+1. Crie um projeto no Supabase.
+2. Abra SQL Editor e execute migration/supabase/001_initial_schema.sql.
+3. No Supabase Auth, habilite Email/Password e configure a URL da Vercel em Authentication > URL Configuration.
+4. Na Vercel, configure VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY e VITE_APP_TITLE.
+5. Antes de desligar a versao atual, abra o app, abra o console do navegador e execute o conteudo de migration/export/export-local-storage.mjs. Salve a saida como app-data-local.json.
+6. Importe os registros do JSON para as tabelas do Supabase. A ordem recomendada e leagues, league_members, matches, match_events, checkins, notifications.
+7. O login atual por Manus OAuth/localStorage deve ser substituido pelo hook de migration/supabase/auth.ts no AuthGate e pelo cliente em migration/supabase/client.ts. O email passa a ser a credencial do Supabase; o apelido continua sendo um campo do perfil.
+
+ATENCAO SOBRE OS DADOS
+
+O app atual guarda configuracoes, avisos e parte dos cadastros no localStorage do navegador. Um servidor nao consegue ler automaticamente o localStorage de cada usuario. Por isso o pacote contem dois arquivos:
+- migration/export/app-data.json: snapshot universal inicial versionado no codigo.
+- migration/export/export-local-storage.mjs: exportacao dos dados vivos do navegador. Execute-o no navegador para capturar alteracoes feitas durante os testes.
+
+FUNCOES NOVAS INCLUIDAS NESTA VERSAO
+
+- Lista e alternancia entre perfis de pelada administrados.
+- Nome e identificador de acesso por pelada.
+- Upload de logo/foto da pelada.
+- Upload de foto do perfil dos usuarios pelo administrador.
+- Categorias de aviso: Jogo, Check-in, Escala e Administracao.
+- Contador de avisos nao lidos.
+- Marcar aviso individual ou todos como lidos.
+- Avisos persistidos por perfil de pelada.
+
+SUPORTE
+
+Este arquivo e um guia tecnico de migracao. Nao publique chaves secretas no repositorio. O arquivo ZIP inclui o codigo-fonte e os arquivos de migracao; node_modules, dist, logs e credenciais locais foram excluidos.
